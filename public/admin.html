@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harbor Rentals — Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: var(--gray-100); }
+
+    /* ── Login screen ── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--mid) 100%);
+    }
+    .login-box {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-logo { font-size: 2.5rem; margin-bottom: 12px; }
+    .login-box h2 { font-size: 1.3rem; margin-bottom: 4px; color: var(--navy); }
+    .login-box p { color: var(--gray-500); font-size: 0.88rem; margin-bottom: 28px; }
+
+    /* ── Admin shell ── */
+    #admin-app { display: none; min-height: 100vh; }
+    .admin-nav {
+      background: var(--navy);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 60px;
+    }
+    .admin-nav-logo { color: white; font-weight: 800; font-size: 1rem; letter-spacing: 0.05em; margin-right: 32px; }
+    .admin-nav-logo span { color: var(--coral); }
+    .nav-tab {
+      padding: 0 16px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: color var(--transition), border-color var(--transition);
+      white-space: nowrap;
+    }
+    .nav-tab:hover { color: white; }
+    .nav-tab.active { color: white; border-bottom-color: var(--coral); }
+    .nav-spacer { flex: 1; }
+    .nav-logout {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: color var(--transition);
+    }
+    .nav-logout:hover { color: white; }
+
+    .admin-main { padding: 28px 28px; max-width: 1200px; margin: 0 auto; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Stats bar ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--navy); }
+    .stat-label { font-size: 0.8rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+
+    /* ── Panel header ── */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .panel-header h2 { font-size: 1.2rem; font-weight: 700; }
+
+    /* ── Calendar panel ── */
+    .admin-cal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) { .admin-cal-grid { grid-template-columns: 1fr; } }
+    .cal-boat-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+    .cal-boat-card h4 { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+    .admin-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .admin-cal-nav span { font-size: 0.88rem; font-weight: 600; color: var(--navy); }
+
+    /* ── Filters ── */
+    .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+    .filter-bar select, .filter-bar input { padding: 8px 12px; border: 2px solid var(--gray-300); border-radius: var(--radius-sm); font-size: 0.88rem; color: var(--navy); background: white; }
+
+    /* ── Boat edit ── */
+    .boat-edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; }
+    @media (max-width: 500px) { .boat-edit-grid { grid-template-columns: 1fr; } }
+    .boat-edit-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
+    .boat-edit-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: var(--navy); }
+    .boat-preview-img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚓</div>
+    <h2>Harbor Rentals Admin</h2>
+    <p>Owner access only</p>
+    <form id="login-form">
+      <div class="form-group" style="text-align:left">
+        <label>Password</label>
+        <input type="password" class="form-control" id="login-password" placeholder="Enter admin password" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-navy" style="width:100%;padding:12px;font-size:0.95rem">Log In</button>
+      <p id="login-error" style="color:var(--red);font-size:0.85rem;margin-top:12px;display:none">Incorrect password</p>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app">
+  <nav class="admin-nav">
+    <div class="admin-nav-logo">Harbor<span>Rentals</span></div>
+    <div class="nav-tab active" onclick="switchTab('dashboard')">Dashboard</div>
+    <div class="nav-tab" onclick="switchTab('bookings')">Bookings</div>
+    <div class="nav-tab" onclick="switchTab('calendar')">Calendar</div>
+    <div class="nav-tab" onclick="switchTab('blocked')">Blocked Dates</div>
+    <div class="nav-tab" onclick="switchTab('boats')">Boats</div>
+    <div class="nav-spacer"></div>
+    <div class="nav-logout" onclick="logout()">Log out</div>
+  </nav>
+
+  <div class="admin-main">
+
+    <!-- ─── DASHBOARD TAB ─── -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-pending">—</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-confirmed">—</div><div class="stat-label">Confirmed</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-revenue">—</div><div class="stat-label">Est. Revenue</div></div>
+      </div>
+
+      <div class="panel-header">
+        <h2>Recent Bookings</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddBookingModal()">+ Add Booking</button>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="data-table" id="dashboard-table">
+          <thead><tr>
+            <th>Customer</th><th>Boat</th><th>Dates</th><th>Total</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="dashboard-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── BOOKINGS TAB ─── -->
+    <div class="tab-panel" id="tab-bookings">
+      <div class="panel-header">
+        <h2>All Bookings</h2>
+        <button class="btn btn-primary btn-sm" onclick="openAddBookingModal()">+ Add Booking</button>
+      </div>
+      <div class="filter-bar">
+        <select id="filter-status" onchange="renderBookingsTable()">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="filter-boat" onchange="renderBookingsTable()">
+          <option value="">All Boats</option>
+        </select>
+        <input type="text" id="filter-search" placeholder="Search by name/email…" oninput="renderBookingsTable()" style="min-width:200px">
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr>
+            <th>ID</th><th>Customer</th><th>Boat</th><th>Dates</th><th>Days</th><th>Total</th><th>Status</th><th>Notes</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="bookings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── CALENDAR TAB ─── -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="panel-header">
+        <h2>Availability Calendar</h2>
+        <div style="display:flex;gap:12px;align-items:center">
+          <button class="cal-nav-btn btn btn-outline btn-sm" id="admin-cal-prev">&#8592; Prev</button>
+          <span id="admin-cal-label" style="font-weight:700;color:var(--navy)">—</span>
+          <button class="cal-nav-btn btn btn-outline btn-sm" id="admin-cal-next">Next &#8594;</button>
+        </div>
+      </div>
+      <div class="admin-cal-grid" id="admin-cal-grid"></div>
+      <div class="legend" style="margin-top:8px">
+        <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFF8E1"></div>Pending</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#FFEBEE"></div>Booked</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--gray-100)"></div>Blocked</div>
+      </div>
+    </div>
+
+    <!-- ─── BLOCKED DATES TAB ─── -->
+    <div class="tab-panel" id="tab-blocked">
+      <div class="panel-header">
+        <h2>Blocked Dates</h2>
+        <button class="btn btn-navy btn-sm" onclick="openBlockModal()">+ Block Dates</button>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Boat</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr></thead>
+          <tbody id="blocked-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ─── BOATS TAB ─── -->
+    <div class="tab-panel" id="tab-boats">
+      <div class="panel-header"><h2>Manage Boats</h2></div>
+      <div class="boat-edit-grid" id="boats-edit-grid"></div>
+    </div>
+
+  </div><!-- /admin-main -->
+</div><!-- /admin-app -->
+
+<!-- ─── MODALS ─── -->
+
+<!-- Edit Booking Modal -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="booking-modal-title">Edit Booking</h3>
+      <button class="modal-close" onclick="closeModal('booking-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bm-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Boat</label>
+          <select class="form-control" id="bm-boat"></select>
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" class="form-control" id="bm-start">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" class="form-control" id="bm-end">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Customer Name</label>
+          <input type="text" class="form-control" id="bm-name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-control" id="bm-email">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" class="form-control" id="bm-phone">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Status</label>
+          <select class="form-control" id="bm-status">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Notes</label>
+          <textarea class="form-control" id="bm-notes" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('booking-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBooking()">Save Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Block Dates Modal -->
+<div class="modal-overlay" id="block-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3>Block Dates</h3>
+      <button class="modal-close" onclick="closeModal('block-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Boat</label>
+        <select class="form-control" id="bl-boat"></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" class="form-control" id="bl-start">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" class="form-control" id="bl-end">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Reason (optional)</label>
+        <input type="text" class="form-control" id="bl-reason" placeholder="Maintenance, personal use…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('block-modal')">Cancel</button>
+      <button class="btn btn-navy" onclick="saveBlock()">Block Dates</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Boat Modal -->
+<div class="modal-overlay" id="boat-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit Boat</h3>
+      <button class="modal-close" onclick="closeModal('boat-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="btm-id">
+      <div class="form-group">
+        <label>Boat Name</label>
+        <input type="text" class="form-control" id="btm-name">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="btm-desc" rows="3"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="form-group">
+          <label>Daily Rate ($)</label>
+          <input type="number" class="form-control" id="btm-rate" min="0" step="5">
+        </div>
+        <div class="form-group">
+          <label>Capacity</label>
+          <input type="number" class="form-control" id="btm-capacity" min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Image URL</label>
+        <input type="url" class="form-control" id="btm-image">
+      </div>
+      <div class="form-group">
+        <label>Features (comma-separated)</label>
+        <input type="text" class="form-control" id="btm-features" placeholder="Fishing gear, Cooler, Bluetooth speakers">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('boat-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBoat()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h3>Confirm Delete</h3>
+      <button class="modal-close" onclick="closeModal('delete-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="delete-message" style="color:var(--gray-700)">Are you sure?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn btn-danger" id="delete-confirm-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="/js/admin.js"></script>
+</body>
+</html>
