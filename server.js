@@ -65,20 +65,20 @@ if (boatCount.count === 0) {
     VALUES (?, ?, ?, ?, ?, ?)
   `);
   insert.run(
-    'Sea Breeze',
-    '28ft center console — built for the open water. Perfect for fishing trips, island hops, or a day out with the crew. Spacious deck with plenty of room to spread out.',
-    450,
-    8,
-    'https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?w=800&q=80',
-    JSON.stringify(['Fishing gear', 'Bluetooth speakers', 'Cooler', 'Shade canopy'])
-  );
-  insert.run(
-    'Island Hopper',
-    '22ft bowrider — sleek, fast, and ready for fun. Ideal for watersports, cruising, or a sunset ride. Board platform and tower make it the ultimate summer boat.',
+    'Sea Ray SPX 190',
+    '19ft bowrider — sleek, fast, and built for fun. Perfect for watersports, cruising, or a sunset ride with the crew. Wakeboard tower and bimini top keep things dialed.',
     350,
     6,
-    'https://images.unsplash.com/photo-1605281317010-fe5ffe798166?w=800&q=80',
-    JSON.stringify(['Wakeboard tower', 'Bluetooth speakers', 'Swim platform', 'Bimini top'])
+    '/images/boat1.png',
+    JSON.stringify(['Wakeboard tower', 'Bimini top', 'Bluetooth speakers', 'Swim platform'])
+  );
+  insert.run(
+    'Boat 2',
+    'Details coming soon.',
+    400,
+    8,
+    '',
+    JSON.stringify([])
   );
   console.log('Seed data inserted.');
 }
