@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: harbor-rentals
+    name: daltonboatclub
     runtime: node
     plan: free
     buildCommand: npm install
