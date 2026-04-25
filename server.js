@@ -5,8 +5,31 @@ const path = require('path');
 const cors = require('cors');
 const fs = require('fs');
 
+const multer = require('multer');
+
 const app = express();
 const PORT = process.env.PORT || 3460;
+
+// Ensure uploads dir exists
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+// Multer storage for boat images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `boat-${req.params.id}-${Date.now()}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only images allowed'));
+  }
+});
 
 // Middleware
 app.use(cors());
@@ -389,6 +412,25 @@ app.put('/api/admin/boats/:id', adminAuth, (req, res) => {
 
   updated.features = JSON.parse(updated.features);
   res.json({ id: Number(req.params.id), ...updated });
+});
+
+// ── Image Upload ──────────────────────────────
+app.post('/api/admin/boats/:id/image', adminAuth, upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
+
+  const boat = db.prepare('SELECT * FROM boats WHERE id = ?').get(req.params.id);
+  if (!boat) return res.status(404).json({ error: 'Boat not found' });
+
+  // Delete old uploaded image if it was a local upload
+  if (boat.imageUrl && boat.imageUrl.startsWith('/uploads/')) {
+    const oldPath = path.join(__dirname, 'public', boat.imageUrl);
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+  db.prepare('UPDATE boats SET imageUrl = ? WHERE id = ?').run(imageUrl, req.params.id);
+
+  res.json({ imageUrl });
 });
 
 // Serve admin page at /admin too

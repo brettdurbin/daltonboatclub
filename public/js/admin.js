@@ -448,6 +448,17 @@ function openBoatModal(id) {
   document.getElementById('btm-capacity').value = b.capacity;
   document.getElementById('btm-image').value = b.imageUrl;
   document.getElementById('btm-features').value = b.features.join(', ');
+  
+  // Set up image preview
+  const preview = document.getElementById('boat-preview-img');
+  if (b.imageUrl) {
+    preview.src = b.imageUrl;
+    preview.style.display = 'block';
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+  
   openModal('boat-modal');
 }
 
@@ -464,11 +475,35 @@ async function saveBoat() {
   };
 
   try {
+    // First save boat details
     const res = await fetch(`${API}/api/admin/boats/${id}`, {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) { toast(data.error || 'Save failed', 'error'); return; }
+
+    // Then handle image upload if selected
+    const fileInput = document.getElementById('btm-image-file');
+    if (fileInput.files.length > 0) {
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+      
+      const uploadRes = await fetch(`${API}/api/admin/boats/${id}/image`, {
+        method: 'POST',
+        headers: { 'x-admin-password': adminToken },
+        body: formData
+      });
+      
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        // Update the preview
+        const preview = document.getElementById('boat-preview-img');
+        preview.src = uploadData.imageUrl;
+        preview.style.display = 'block';
+        toast('Image uploaded successfully', 'success');
+      }
+    }
+
     toast('Boat updated', 'success');
     closeModal('boat-modal');
     await loadBoats();
